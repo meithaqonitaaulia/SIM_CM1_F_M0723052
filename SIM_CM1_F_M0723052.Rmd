@@ -1,0 +1,624 @@
+---
+title: "**Clustering Customer Berdasarkan Perilaku Penyewaan Film Menggunakan K-Means
+  pada Database Sakila**"
+author: "Meitha Qonita Aulia - M0723052"
+date: "2026-05-24"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+    highlight: tango
+    self_contained: true
+  pdf_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+<style>
+body {
+  text-align: justify
+  }
+</style>
+
+# **Pendahuluan**
+
+Database Sakila merupakan database simulasi rental film yang berisi berbagai informasi terkait pelanggan, transaksi penyewaan film, pembayaran, serta kategori film. Database ini sering digunakan dalam pembelajaran pengolahan data dan data mining karena memiliki struktur relasional yang lengkap dan saling terhubung.
+
+Pada analisis ini digunakan beberapa tabel, yaitu tabel `customer`, `rental`, `payment`, `inventory`, `film`, `film_category`, dan `category`. Data dari tabel-tabel tersebut digabungkan untuk memperoleh informasi mengenai perilaku penyewaan film oleh setiap *customer*.
+
+Analisis dilakukan menggunakan metode K-Means Clustering untuk mengelompokkan *customer* berdasarkan kemiripan perilaku penyewaan film. Variabel yang digunakan dalam proses *clustering* meliputi total transaksi rental (`total_rental`), total pembayaran (`total_payment`), rata-rata lama penyewaan (`avg_rental_duration`), jumlah kategori film yang disewa (`unique_category`), dan lama aktivitas *customer* (`active_days`).
+
+Tujuan dari analisis ini adalah untuk mengetahui pola perilaku pelanggan dalam melakukan penyewaan film serta melihat kelompok *customer* yang memiliki karakteristik serupa. Hasil *clustering* diharapkan dapat memberikan insight mengenai segmentasi pelanggan sehingga dapat membantu perusahaan dalam memahami perilaku *customer* dan menentukan strategi bisnis yang lebih tepat sasaran.
+
+
+# **Deskripsi Data**
+
+Database yang digunakan adalah database Sakila dari MySQL.
+
+## Tabel yang Digunakan
+
+Tabel yang digunakan pada analisis ini yaitu:
+
+- customer
+- rental
+- payment
+- inventory
+- film
+- film_category
+- category
+
+## Variabel Penelitian
+
+| Variabel | Keterangan |
+|---|---|
+| total_rental | Total transaksi rental customer |
+| total_payment | Total pembayaran customer |
+| avg_rental_duration | Rata-rata lama penyewaan film |
+| unique_category | Jumlah kategori film yang pernah disewa |
+| active_days | Lama aktivitas customer |
+
+# **Metodologi Analisis**
+
+Metode analisis yang digunakan pada penelitian ini adalah *K-Means Clustering*. Metode ini digunakan untuk mengelompokkan *customer* berdasarkan kemiripan perilaku penyewaan film. Tahapan analisis yang dilakukan meliputi pengumpulan data, *preprocessing data*, standardisasi data, penentuan jumlah *cluster*, proses *clustering* menggunakan algoritma *K-Means*, serta interpretasi hasil *cluster*.
+
+## Pengumpulan Data
+
+Data diperoleh dari database Sakila dengan menggabungkan beberapa tabel, yaitu `customer`, `rental`, `payment`, `inventory`, `film`, `film_category`, dan `category`. Proses penggabungan data dilakukan menggunakan query SQL untuk menghasilkan data *customer* beserta informasi perilaku penyewaan film.
+
+Variabel yang digunakan dalam analisis meliputi:
+
+- `total_rental`
+- `total_payment`
+- `avg_rental_duration`
+- `unique_category`
+- `active_days`
+
+## Preprocessing Data
+
+Tahap *preprocessing* dilakukan untuk memastikan data siap digunakan dalam proses *clustering*. Tahapan ini meliputi:
+
+- pengecekan *missing value*,
+- pemilihan variabel numerik,
+- serta standardisasi data.
+
+Standardisasi dilakukan karena setiap variabel memiliki skala yang berbeda sehingga dapat memengaruhi hasil *clustering*.
+
+Proses standardisasi menggunakan metode *Z-Score* dengan persamaan:
+
+$$
+Z =
+\frac{x - \mu}{\sigma}
+$$
+
+Keterangan:
+
+- $x$ = nilai data
+- $\mu$ = rata-rata data
+- $\sigma$ = standar deviasi
+
+## Metode K-Means Clustering
+
+*K-Means Clustering* merupakan metode pengelompokan data yang bertujuan meminimalkan variasi dalam *cluster* dan memaksimalkan perbedaan antar *cluster*.
+
+Perhitungan jarak antar data menggunakan *Euclidean Distance*:
+
+$$
+d(x_i, x_j) =
+\sqrt{
+\sum_{k=1}^{p}
+(x_{ik} - x_{jk})^2
+}
+$$
+
+Keterangan:
+
+- $d(x_i,x_j)$ = jarak antar data
+- $p$ = jumlah variabel
+- $x_{ik}$ = nilai variabel ke-$k$ pada data ke-$i$
+
+Fungsi objektif pada metode *K-Means* adalah meminimalkan nilai *Within Cluster Sum of Squares* (WCSS):
+
+$$
+J =
+\sum_{i=1}^{k}
+\sum_{x_j \in C_i}
+||x_j - c_i||^2
+$$
+
+Keterangan:
+
+- $J$ = fungsi objektif
+- $k$ = jumlah *cluster*
+- $C_i$ = *cluster* ke-$i$
+- $c_i$ = *centroid cluster* ke-$i$
+
+*Centroid cluster* dihitung menggunakan persamaan:
+
+$$
+c_i =
+\frac{1}{n_i}
+\sum_{x_j \in C_i}
+x_j
+$$
+
+Keterangan:
+
+- $c_i$ = *centroid cluster* ke-$i$
+- $n_i$ = jumlah anggota *cluster* ke-$i$
+
+
+## Penentuan Jumlah Cluster
+
+Penentuan jumlah *cluster* dilakukan menggunakan:
+
+- *Elbow Method*
+- *Silhouette Method*
+
+*Silhouette Coefficient* digunakan untuk mengevaluasi kualitas *cluster* dengan persamaan:
+
+$$
+s(i) =
+\frac{b(i) - a(i)}
+{\max(a(i), b(i))}
+$$
+
+Keterangan:
+
+- $a(i)$ = rata-rata jarak data terhadap *cluster* sendiri
+- $b(i)$ = rata-rata jarak data terhadap *cluster* terdekat
+
+Nilai *silhouette* berada pada rentang:
+
+$$
+-1 \leq s(i) \leq 1
+$$
+
+Semakin mendekati 1, maka kualitas *cluster* semakin baik.
+
+## Visualisasi dan Interpretasi Cluster
+
+Hasil *clustering* divisualisasikan menggunakan *Principal Component Analysis* (PCA) untuk melihat persebaran *cluster customer*. Selanjutnya dilakukan interpretasi karakteristik masing-masing *cluster* berdasarkan rata-rata variabel pada setiap kelompok *customer*.
+
+
+# **Import Library**
+
+```{r}
+library(DBI)
+library(RMySQL)
+library(dplyr)
+library(ggplot2)
+library(cluster)
+library(factoextra)
+library(tidyr)
+library(corrplot)
+library(plotly)
+```
+
+# **Koneksi Database**
+
+```{r}
+con <- dbConnect(
+  MySQL(),
+  user = "root",
+  password = "qon1t4ku",
+  host = "127.0.0.1",
+  port = 3306,
+  dbname = "sakila"
+)
+```
+
+# **Pengambilan Data**
+
+```{r}
+query <- "
+SELECT 
+    c.customer_id,
+    CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+    
+    COUNT(r.rental_id) AS total_rental,
+    
+    SUM(p.amount) AS total_payment,
+    
+    AVG(DATEDIFF(r.return_date, r.rental_date)) AS avg_rental_duration,
+    
+    COUNT(DISTINCT fc.category_id) AS unique_category,
+    
+    DATEDIFF(MAX(r.rental_date), MIN(r.rental_date)) AS active_days
+
+FROM customer c
+
+JOIN rental r
+    ON c.customer_id = r.customer_id
+
+JOIN payment p
+    ON r.rental_id = p.rental_id
+
+JOIN inventory i
+    ON r.inventory_id = i.inventory_id
+
+JOIN film f
+    ON i.film_id = f.film_id
+
+JOIN film_category fc
+    ON f.film_id = fc.film_id
+
+GROUP BY c.customer_id
+"
+
+data <- dbGetQuery(con, query)
+
+head(data)
+```
+
+# **Data Preparation**
+
+## Struktur Data
+
+```{r}
+str(data)
+```
+
+## Mengecek Missing Value
+
+```{r}
+colSums(is.na(data))
+```
+
+## Statistik Deskriptif
+
+```{r}
+summary(data)
+```
+
+## Memilih Variabel Numerik
+
+```{r}
+cluster_data <- data %>%
+  select(
+    total_rental,
+    total_payment,
+    avg_rental_duration,
+    unique_category,
+    active_days
+  )
+
+head(cluster_data)
+```
+
+## Standardisasi Data
+
+Standardisasi dilakukan karena setiap variabel memiliki satuan dan skala yang berbeda.
+
+```{r}
+scaled_data <- scale(cluster_data)
+
+head(scaled_data)
+```
+
+# **Exploratory Data Analysis**
+
+## Korelasi Variabel
+
+```{r}
+cor_matrix <- cor(cluster_data)
+
+corrplot(
+  cor_matrix,
+  method = "color",
+  type = "upper",
+  addCoef.col = "black",
+  tl.col = "black",
+  col = colorRampPalette(c(
+    "#00BFC4",  
+    "white",
+    "#F8766D"   
+  ))(200)
+)
+```
+
+Berdasarkan *heatmap* korelasi, terlihat bahwa variabel `total_rental` memiliki korelasi positif yang sangat kuat dengan `total_payment` sebesar 0,87. Hal ini menunjukkan bahwa semakin banyak *customer* melakukan penyewaan film, maka total pembayaran yang dilakukan juga cenderung semakin besar.
+
+Variabel `unique_category` memiliki korelasi positif sedang dengan `total_rental` sebesar 0,60 dan dengan `total_payment` sebesar 0,53. Hal ini menunjukkan bahwa *customer* yang menyewa lebih banyak kategori film cenderung memiliki aktivitas rental dan pembayaran yang lebih tinggi.
+
+Sementara itu, variabel `avg_rental_duration` dan `active_days` memiliki korelasi yang relatif rendah terhadap variabel lainnya. Hal tersebut menunjukkan bahwa lama penyewaan film dan lama aktivitas *customer* tidak terlalu berpengaruh terhadap jumlah transaksi maupun total pembayaran *customer*
+
+Secara umum, hasil korelasi menunjukkan bahwa aktivitas rental *customer* lebih banyak dipengaruhi oleh intensitas transaksi dan variasi kategori film yang disewa.
+
+## Distribusi Total Rental
+
+```{r}
+ggplot(data, aes(x = total_rental)) +
+  geom_histogram(
+    bins = 20,
+    fill = "#00BFC4",
+    color = "black"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribusi Total Rental",
+    x = "Total Rental",
+    y = "Frekuensi"
+  )
+```
+
+Berdasarkan histogram distribusi total rental, terlihat bahwa sebagian besar *customer* memiliki jumlah rental pada kisaran sekitar 20 hingga 30 transaksi. Hal ini menunjukkan bahwa mayoritas *customer* memiliki tingkat aktivitas penyewaan film pada kategori menengah.
+
+Selain itu, distribusi data cenderung sedikit miring ke kanan (*right skewed*), yang menunjukkan bahwa terdapat beberapa *customer* dengan jumlah rental yang jauh lebih tinggi dibandingkan *customer* lainnya. *Customer* dengan jumlah rental tinggi tersebut berpotensi termasuk ke dalam kelompok pelanggan aktif (*heavy users*).
+
+Secara umum, distribusi total rental menunjukkan bahwa perilaku penyewaan *customer* cukup bervariasi meskipun sebagian besar *customer* memiliki tingkat aktivitas yang relatif sedang.
+
+## Distribusi Total Payment
+
+```{r}
+ggplot(data, aes(x = total_payment)) +
+  geom_histogram(
+    bins = 20,
+    fill = "#F8766D",
+    color = "black"
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Distribusi Total Payment",
+    x = "Total Payment",
+    y = "Frekuensi"
+  )
+```
+
+Berdasarkan histogram distribusi total *payment*, terlihat bahwa sebagian besar *customer* memiliki total pembayaran pada kisaran sekitar 90 hingga 140. Hal ini menunjukkan bahwa mayoritas *customer* memberikan kontribusi pembayaran pada tingkat menengah.
+
+Distribusi total *payment* juga terlihat sedikit miring ke kanan (*right skewed*), yang menunjukkan adanya beberapa *customer* dengan total pembayaran yang jauh lebih tinggi dibandingkan *customer* lainnya. Kondisi ini mengindikasikan adanya kelompok *customer* dengan aktivitas penyewaan yang sangat tinggi sehingga menghasilkan total pembayaran yang besar.
+
+Pola distribusi total payment yang mirip dengan distribusi total rental juga mendukung hasil korelasi sebelumnya bahwa semakin tinggi aktivitas rental *customer*, maka total pembayaran *customer* cenderung semakin besar.
+
+# **Menentukan Jumlah Cluster**
+
+## Elbow Method
+
+```{r}
+fviz_nbclust(
+  scaled_data,
+  kmeans,
+  method = "wss"
+) +
+  labs(title = "Elbow Method")
+```
+
+Berdasarkan grafik *Elbow Method*, terlihat bahwa nilai *Within Cluster Sum of Squares* (WCSS) mengalami penurunan yang cukup signifikan dari *cluster* 1 hingga *cluster* 4. Setelah jumlah *cluster* melewati 4, penurunan nilai WCSS cenderung melambat dan grafik mulai membentuk pola melandai (*elbow*).
+
+Hal tersebut menunjukkan bahwa penambahan *cluster* setelah *cluster* ke-4 tidak memberikan peningkatan yang terlalu besar terhadap kualitas pengelompokan data. Oleh karena itu, jumlah *cluster* 4 dianggap cukup optimal untuk merepresentasikan variasi perilaku *customer* dalam data.
+
+## Silhouette Method
+
+```{r}
+fviz_nbclust(
+  scaled_data,
+  kmeans,
+  method = "silhouette"
+) +
+  labs(title = "Silhouette Method")
+```
+
+Berdasarkan grafik *Silhouette Method*, nilai rata-rata *silhouette* tertinggi diperoleh pada jumlah *cluster* 4. Nilai *silhouette* yang lebih tinggi menunjukkan bahwa objek pada masing-masing *cluster* memiliki tingkat kemiripan yang tinggi terhadap *cluster* miliknya dan memiliki pemisahan yang cukup baik dengan *cluster* lainnya.
+
+Hasil tersebut menunjukkan bahwa penggunaan 4 *cluster* menghasilkan struktur *cluster* yang relatif lebih baik dibandingkan jumlah *cluster* lainnya. Oleh karena itu, pada penelitian ini dipilih sebanyak 4 *cluster* untuk proses *K-Means Clustering*.
+
+# **K-Means Clustering**
+
+Berdasarkan hasil *Elbow Method* dan *Silhouette Method* dipilih 4 *cluster*.
+
+```{r}
+set.seed(123)
+
+kmeans_result <- kmeans(
+  scaled_data,
+  centers = 4,
+  nstart = 25
+)
+
+kmeans_result
+```
+
+# **Menambahkan Hasil Cluster**
+
+```{r}
+data$cluster <- as.factor(kmeans_result$cluster)
+
+head(data)
+```
+
+# **Jumlah Anggota Tiap Cluster**
+
+```{r}
+data %>%
+  count(cluster)
+```
+
+# **Evaluasi Silhouette**
+
+```{r}
+sil <- silhouette(
+  kmeans_result$cluster,
+  dist(scaled_data)
+)
+
+fviz_silhouette(sil)
+```
+
+Berdasarkan hasil evaluasi *silhouette*, diperoleh nilai rata-rata *silhouette* (*average silhouette width*) sebesar 0,24. Nilai tersebut menunjukkan bahwa hasil *clustering* memiliki pemisahan *cluster* yang cukup baik meskipun masih terdapat beberapa data yang memiliki kemiripan dengan *cluster* lain.
+
+Selain itu, terlihat bahwa *cluster* 4 memiliki nilai rata-rata *silhouette* tertinggi sebesar 0,28 sehingga *cluster* tersebut memiliki struktur *cluster* yang relatif lebih baik dibandingkan *cluster* lainnya. Sementara itu, *cluster* 3 memiliki nilai *silhouette* paling rendah sebesar 0,19 yang menunjukkan bahwa beberapa anggota pada *cluster* tersebut memiliki karakteristik yang cukup dekat dengan *cluster* lain.
+
+Secara umum, hasil *silhouette* menunjukkan bahwa penggunaan 4 *cluster* sudah cukup mampu menggambarkan segmentasi *customer* berdasarkan perilaku penyewaan film pada database Sakila.
+
+# **Visualisasi Cluster**
+
+## Visualisasi PCA
+
+```{r}
+fviz_cluster(
+  kmeans_result,
+  data = scaled_data,
+  geom = "point",
+  ellipse.type = "norm",
+  ggtheme = theme_minimal()
+)
+```
+
+Berdasarkan visualisasi PCA, terlihat bahwa data *customer* berhasil terbagi ke dalam 4 *cluster* yang berbeda berdasarkan kemiripan perilaku penyewaan film. Masing-masing warna menunjukkan kelompok *customer* dengan karakteristik yang berbeda.
+
+Sebagian *cluster* terlihat cukup terpisah, terutama pada *cluster* 1 dan *cluster* 4, sehingga menunjukkan adanya perbedaan perilaku *customer* yang relatif jelas. Namun, masih terdapat beberapa area yang saling tumpang tindih antar *cluster*, khususnya pada *cluster* 2 dan *cluster* 3. Hal ini menunjukkan bahwa beberapa *customer* memiliki karakteristik perilaku yang mirip sehingga batas antar *cluster* tidak sepenuhnya terpisah.
+
+Selain itu, dimensi pertama (Dim1) mampu menjelaskan sebesar 48% variasi data, sedangkan dimensi kedua (Dim2) menjelaskan sebesar 20.6% variasi data. Dengan demikian, visualisasi PCA sudah cukup merepresentasikan pola persebaran *customer* berdasarkan hasil *clustering*.
+
+## Visualisasi Interaktif
+
+```{r}
+pca <- prcomp(scaled_data)
+
+pca_data <- data.frame(
+  PC1 = pca$x[,1],
+  PC2 = pca$x[,2],
+  cluster = data$cluster,
+  customer = data$customer_name
+)
+
+plot_ly(
+  pca_data,
+  x = ~PC1,
+  y = ~PC2,
+  color = ~cluster,
+  colors = c(
+    "#F8766D",  
+    "#7CAE00",  
+    "#00BFC4",  
+    "#C77CFF"   
+  ),
+  text = ~customer,
+  type = "scatter",
+  mode = "markers"
+) %>%
+  layout(
+    template = "simple_white"
+  )
+```
+
+Berdasarkan visualisasi *cluster* menggunakan PCA, terlihat bahwa data *customer* berhasil terbagi ke dalam 4 kelompok berdasarkan kemiripan perilaku penyewaan film. Masing-masing warna menunjukkan *cluster* dengan karakteristik *customer* yang berbeda.
+
+*Cluster* 1 cenderung berada pada sisi kanan grafik sehingga menunjukkan karakteristik yang berbeda dibanding *cluster* lainnya. *Cluster* 3 berada pada sisi kiri grafik dan juga terlihat cukup terpisah dari *cluster* lain. Sementara itu, *cluster* 2 berada di area tengah dan memiliki *overlap* yang cukup besar dengan *cluster* lain sehingga menunjukkan bahwa *customer* pada *cluster* ini memiliki karakteristik yang lebih umum. *Cluster* 4 terlihat berada pada bagian atas grafik dan relatif lebih terpisah dibanding *cluster* 2. Hal ini menunjukkan bahwa *customer* pada *cluster* 4 memiliki pola perilaku tertentu yang membedakannya dari kelompok *customer* lainnya.
+
+Secara umum, visualisasi ini menunjukkan bahwa proses *clustering* sudah cukup mampu memisahkan *customer* berdasarkan pola aktivitas penyewaan film meskipun masih terdapat beberapa area yang saling tumpang tindih antar *cluster*.
+
+# **Karakteristik Tiap Cluster**
+
+```{r}
+cluster_summary <- data %>%
+  group_by(cluster) %>%
+  summarise(
+    avg_total_rental = mean(total_rental),
+    avg_total_payment = mean(total_payment),
+    avg_rental_duration = mean(avg_rental_duration),
+    avg_unique_category = mean(unique_category),
+    avg_active_days = mean(active_days)
+  )
+
+cluster_summary
+```
+
+# **Visualisasi Karakteristik Cluster**
+
+## Rata-rata Total Rental
+
+```{r}
+ggplot(
+  cluster_summary,
+  aes(
+    x = cluster,
+    y = avg_total_rental,
+    fill = cluster
+  )
+) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Rata-rata Total Rental per Cluster",
+    x = "Cluster",
+    y = "Rata-rata Total Rental"
+  )
+```
+
+## Rata-rata Total Payment
+
+```{r}
+ggplot(
+  cluster_summary,
+  aes(
+    x = cluster,
+    y = avg_total_payment,
+    fill = cluster
+  )
+) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Rata-rata Total Payment per Cluster",
+    x = "Cluster",
+    y = "Rata-rata Total Payment"
+  )
+```
+
+# **Interpretasi Hasil**
+
+## Cluster 1 — Customer dengan Aktivitas Rendah
+
+*Cluster* 1 memiliki rata-rata total rental dan total *payment* paling rendah dibandingkan *cluster* lainnya. Hal ini menunjukkan bahwa *customer* pada *cluster* ini cenderung jarang melakukan penyewaan film dan memiliki kontribusi pembayaran yang kecil.
+
+Pada visualisasi PCA, *cluster* 1 terlihat cukup terpisah dari beberapa *cluster* lain, sehingga menunjukkan bahwa karakteristik *customer* pada kelompok ini cukup berbeda, terutama dalam tingkat aktivitas rental yang rendah.
+
+*Customer* pada *cluster* ini dapat dikategorikan sebagai pelanggan dengan aktivitas penyewaan rendah (*low activity customer*).
+
+## Cluster 2 — Customer dengan Aktivitas Menengah
+
+*Cluster* 2 memiliki rata-rata total rental dan total *payment* yang berada pada tingkat menengah. *Customer* pada *cluster* ini cukup aktif melakukan penyewaan film, namun karakteristiknya masih memiliki kemiripan dengan beberapa *cluster* lain.
+
+Hal tersebut terlihat pada visualisasi PCA, di mana *cluster* 2 memiliki area yang cukup banyak bertumpang tindih (*overlap*) dengan *cluster* lain. Kondisi ini menunjukkan bahwa perilaku *customer* pada *cluster* 2 masih relatif umum dan belum memiliki karakteristik yang terlalu spesifik.
+
+*Cluster* ini dapat dikategorikan sebagai *customer* dengan aktivitas menengah (*moderate customer*).
+
+## Cluster 3 — Customer Paling Aktif
+
+*Cluster* 3 memiliki rata-rata total rental dan total *payment* tertinggi dibandingkan seluruh *cluster* lainnya. Hasil ini menunjukkan bahwa *customer* pada *cluster* 3 merupakan kelompok pelanggan paling aktif dalam melakukan penyewaan film.
+
+Pada visualisasi karakteristik *cluster*, *cluster* 3 terlihat memiliki perbedaan yang cukup jelas dibandingkan *cluster* lainnya karena memiliki nilai rata-rata tertinggi pada variabel utama. Selain itu, pada visualisasi PCA *cluster* ini juga membentuk kelompok tersendiri meskipun masih terdapat sedikit overlap dengan *cluster* lain.
+
+*Customer* pada *cluster* ini dapat dikategorikan sebagai pelanggan aktif (*high activity customer*) atau *heavy users*.
+
+## Cluster 4 — Customer Aktif dengan Karakteristik Khusus
+
+*Cluster* 4 memiliki rata-rata total rental dan total *payment* yang cukup tinggi dan nilainya hampir mirip dengan *cluster* 2. Namun, pada visualisasi PCA *cluster* 4 terlihat lebih terpisah dibandingkan *cluster* 2, terutama pada dimensi kedua (Dim2).
+
+Hal tersebut menunjukkan bahwa *customer* pada *cluster* 4 memiliki pola perilaku tertentu yang membedakannya dari *cluster* lain meskipun tingkat aktivitas rental dan pembayaran tidak jauh berbeda dengan *cluster* 2.
+
+Dengan demikian, *customer* pada *cluster* 4 dapat dikategorikan sebagai *customer* aktif dengan karakteristik perilaku yang lebih spesifik atau lebih konsisten dibandingkan *customer* pada *cluster* 2.
+
+# **Kesimpulan**
+
+Berdasarkan hasil analisis *K-Means Clustering* pada database Sakila, diperoleh 4 kelompok *customer* dengan karakteristik perilaku penyewaan film yang berbeda-beda. Proses *clustering* dilakukan menggunakan variabel total rental, total *payment*, rata-rata lama penyewaan, jumlah kategori film, dan lama aktivitas *customer*.
+
+Hasil evaluasi menggunakan *Elbow Method* dan *Silhouette Method* menunjukkan bahwa penggunaan 4 *cluster* sudah cukup optimal dalam merepresentasikan variasi perilaku *customer* Selain itu, visualisasi PCA menunjukkan bahwa sebagian besar *cluster* berhasil terbentuk dengan cukup baik meskipun masih terdapat beberapa *overlap* antar *cluster*.
+
+Karakteristik *cluster* yang diperoleh yaitu:
+
+1. *Cluster* 1 merupakan *customer* dengan aktivitas penyewaan rendah.
+2. *Cluster* 2 merupakan *customer* dengan aktivitas menengah dan karakteristik yang masih cukup umum.
+3. *Cluster* 3 merupakan *customer* paling aktif dengan jumlah rental dan pembayaran tertinggi.
+4. *Cluster* 4 merupakan *customer* aktif yang memiliki karakteristik perilaku lebih spesifik dibandingkan cluster lainnya.
+
+Secara umum, hasil *clustering* mampu memberikan *insight* mengenai segmentasi *customer* berdasarkan perilaku penyewaan film. Informasi tersebut dapat membantu perusahaan dalam memahami pola perilaku pelanggan serta mendukung penyusunan strategi pemasaran yang lebih tepat sasaran.
